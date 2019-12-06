@@ -1,0 +1,12 @@
+{
+    "name": "johnband/laravel-actions",
+    "description": "Action based architecture for Laravel",
+    "type": "library",
+    "authors": [
+        {
+            "name": "johnband",
+            "email": "guillaume.boutin@protonmail.com"
+        }
+    ],
+    "require": {}
+}
