@@ -2,8 +2,13 @@
 
 namespace JohnBand\Traits;
 
+use Illuminate\Support\Facades\Validator;
+
 trait ResolvesValidation
 {
+    /** @var ValidationExcpetion */
+    protected $validationException;
+
     protected function hasControllerRules() : bool
     {
         return method_exists($this, 'controllerRules');
@@ -22,5 +27,18 @@ trait ResolvesValidation
     protected function resolveControllerMessages() : array
     {
         return $this->controllerMessages($this->messages());
+    }
+
+    protected function validate()
+    {
+        if (! $this->hasRules()) return;
+
+        $this->validator = Validator::make(
+            $this->attributes,
+            $this->resolveRules(),
+            $this->resolveMessages()
+        );
+
+        $this->validator->validate();
     }
 }

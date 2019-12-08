@@ -6,11 +6,11 @@ use Illuminate\Support\Arr;
 use JohnBand\Traits\RunsAsAcontroller;
 use JohnBand\Traits\ResolvesValidation;
 use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Support\Facades\Validator as ValidatorFacade;
 
 abstract class Action
 {
-    use RunsAsAcontroller, ResolvesValidation;
+    use RunsAsAcontroller,
+        ResolvesValidation;
 
     /** @var array */
     protected $attributes;
@@ -31,7 +31,7 @@ abstract class Action
      */
     public static function make(array $attributes) : self
     {
-        return new self($attributes);
+        return new static($attributes);
     }
 
     /**
@@ -57,6 +57,38 @@ abstract class Action
     }
 
     /**
+     * Pick multiple attributes by listing their keys
+     *
+     * @param string[]
+     * @return array
+     */
+    public function only() : array
+    {
+        $data = [];
+        $args = func_get_args();
+        foreach ($args as $key) {
+            $data[$key] = $this->get($key);
+        }
+        return $data;
+    }
+
+    /**
+     * Pick all attributes except those listed by their key
+     *
+     * @param string[]
+     * @return array
+     */
+    public function except() : array
+    {
+        $args = func_get_args();
+        $data = $this->attributes;
+        foreach ($args as $key) {
+            unset($data[$key]);
+        }
+        return $data;
+    }
+
+    /**
      * Retreive all attributes
      *
      * @return array
@@ -74,6 +106,9 @@ abstract class Action
     public function run()
     {
         $this->validate();
+        if ($this->validator->fails()) {
+            throw new ValidationExcpetion($this->validator);
+        }
 
         return $this->execute();
     }
@@ -113,23 +148,8 @@ abstract class Action
     {
         if (! $this->hasMessages()) return [];
 
-        if ($this->hasControllerMessages()) {
-            return $this->resolveControllerMessages();
-        }
+        if ($this->hasControllerMessages()) return $this->resolveControllerMessages();
 
         return $this->messages();
-    }
-
-    protected function validate()
-    {
-        if (! $this->hasRules()) return;
-
-        $this->validator = ValidatorFacade::make(
-            $this->attributes,
-            $this->resolveRules(),
-            $this->resolveMessages()
-        );
-
-        $this->validator->validate();
     }
 }
